@@ -1,0 +1,11 @@
+[package]
+name            = "ipmi"
+version         = "0.1.2"
+authors         = ["Karl Yi28 Liu <liuyi28@lenovo.com>"]
+edition         = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+structopt       = "0.3"
+sqlite          = "0.25"
