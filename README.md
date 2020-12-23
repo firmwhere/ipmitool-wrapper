@@ -2,21 +2,15 @@
 
 ```powershell
 PS C:\Users\efika> ipmi.exe --help
-ipmi 0.1.2
-Hosts manager tool and ipmitool wrapper
+ipmi 0.1.3
+Hosts management tool and ipmitool wrapper
 
 USAGE:
-    ipmi.exe [OPTIONS] [ipmitool-args]... [SUBCOMMAND]
+    ipmi.exe [-- <ipmitool-args>...] [SUBCOMMAND]
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
-
-OPTIONS:
-    -I <interface>        Override inteface <lanplus>
-    -H <ip>               Override default if set on host IP
-    -P <pswd>             Override default if set on host user password
-    -U <user>             Override default if set on host user name
 
 ARGS:
     <ipmitool-args>...    The ipmitool args to process
@@ -27,7 +21,7 @@ SUBCOMMANDS:
 PS C:\Users\efika> # with the tool, goodbye:
 PS C:\Users\efika> ipmitool.exe -I lanplus -H 000.000.000.000 -U admin -P admin <1st> <2nd> ...
 PS C:\Users\efika> # say hello to:
-PS C:\Users\efika> ipmi.exe <1st> <2nd> ...
+PS C:\Users\efika> ipmi.exe -- <1st> <2nd> ...
 PS C:\Users\efika> # [note]: please add ipmitool.exe to PATH before using it.
 ```
 
@@ -206,7 +200,7 @@ Index        IP                          User
 *0001        10.245.38.***              ADMIN
 ---------------------------------------------
 
-PS C:\Users\efika> ipmi.exe user list
+PS C:\Users\efika> ipmi.exe -- user list
 ID  Name             Callin  Link Auth  IPMI Msg   Channel Priv Limit
 2   ADMIN            false   false      true       ADMINISTRATOR
 3   Administrator    true    true       true       ADMINISTRATOR

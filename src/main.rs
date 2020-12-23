@@ -13,6 +13,7 @@ use std::fs;
 use std::io::prelude::*;
 use std::path;
 use structopt::StructOpt;
+use structopt::clap::ArgSettings;
 use sqlite;
 
 #[derive(StructOpt, Debug)]
@@ -21,19 +22,8 @@ struct Opts {
     #[structopt(subcommand)]
     cmd: Option<Command>,
 
-    /// Override inteface <lanplus>
-    #[structopt(short = "I")]
-    interface: Option<String>,
-    /// Override default if set on host IP
-    #[structopt(short = "H")]
-    ip: Option<String>,
-    /// Override default if set on host user name
-    #[structopt(short = "U")]
-    user: Option<String>,
-    /// Override default if set on host user password
-    #[structopt(short = "P")]
-    pswd: Option<String>,
     /// The ipmitool args to process
+    #[structopt(set = ArgSettings::Last)]
     ipmitool_args: Vec<String>,
 }
 
@@ -199,15 +189,44 @@ impl Host {
         connection.execute(format!("UPDATE sqlite_sequence SET seq={} WHERE name='hosts'", _id_)).unwrap();
     }
     fn with_args(&self, opt: &Opts) -> String {
-        let mut ipmitool_args = format!("ipmitool -I {} -H {} -U {} -P {}",
-            opt.interface.as_ref().unwrap_or(&String::from("lanplus")), opt.ip.as_ref().unwrap_or(&self.ip), opt.user.as_ref().unwrap_or(&self.user), opt.pswd.as_ref().unwrap_or(&self.pswd)
-        );
+        if opt.ipmitool_args.len() == 0 {
+            return String::from("");
+        }
+        let mut ipmitool_args = format!("ipmitool");
+
+        let mut ipmitool_host = String::new();
+        let mut option_i = false;
+        let mut option_h = false;
+        let mut option_u = false;
+        let mut option_p = false;
+        for i in &opt.ipmitool_args {
+            match i.as_str() {
+                "-I" => option_i = true,
+                "-H" => option_h = true,
+                "-U" => option_u = true,
+                "-P" => option_p = true,
+                _    => continue,
+            }
+        }
+        if !option_i {
+            ipmitool_host.push_str(&format!(" -I {}", "lanplus"));
+        }
+        if !option_h {
+            ipmitool_host.push_str(&format!(" -H {}", &self.ip));
+        }
+        if !option_u {
+            ipmitool_host.push_str(&format!(" -U {}", &self.user));
+        }
+        if !option_p {
+            ipmitool_host.push_str(&format!(" -P {}", &self.pswd));
+        }
 
         let mut ipmitool_rest = String::new();
         for i in &opt.ipmitool_args {
             ipmitool_rest.push(' ');
             ipmitool_rest.push_str(&i);
         }
+        ipmitool_args.push_str(&ipmitool_host);
         ipmitool_args.push_str(&ipmitool_rest);
 
         ipmitool_args
@@ -596,14 +615,18 @@ fn host_with_args() {
     let host = Host { ip: String::from("000.000.000.000"), user: String::from("admin"), pswd: String::from("admin") };
 
     // case: use database default host
-    let opts = Opts { cmd: None, interface: None, ip: None, user: None, pswd: None, ipmitool_args: Vec::new() };
+    let opts = Opts { cmd: None, ipmitool_args: Vec::new() };
     assert_eq!(host.with_args(&opts), "ipmitool -I lanplus -H 000.000.000.000 -U admin -P admin");
 
-    // case: override database default
-    let opts = Opts { cmd: None, interface: Some(String::from("lan")), ip: Some(String::from("200.050.005.000")), user: Some(String::from("ADMIN")), pswd: Some(String::from("ad*in")), ipmitool_args: Vec::new() };
+    // case: override one database default
+    let opts = Opts { cmd: None, ipmitool_args: vec![String::from("-I"), String::from("lan")] };
+    assert_eq!(host.with_args(&opts), "ipmitool -H 000.000.000.000 -U admin -P admin -I lan");
+
+    // case: override all database default
+    let opts = Opts { cmd: None, ipmitool_args: vec![String::from("-I"), String::from("lan"), String::from("-H"), String::from("200.050.005.000"), String::from("-U"), String::from("ADMIN"), String::from("-P"), String::from("ad*in")] };
     assert_eq!(host.with_args(&opts), "ipmitool -I lan -H 200.050.005.000 -U ADMIN -P ad*in");
 
     // case: with ipmitool_args
-    let opts = Opts { cmd: None, interface: None, ip: None, user: None, pswd: None, ipmitool_args: vec![String::from("1st"), String::from("sec")] };
-    assert_eq!(host.with_args(&opts), "ipmitool -I lanplus -H 000.000.000.000 -U admin -P admin 1st sec");
+    let opts = Opts { cmd: None, ipmitool_args: vec![String::from("-b"), String::from("0xff")] };
+    assert_eq!(host.with_args(&opts), "ipmitool -I lanplus -H 000.000.000.000 -U admin -P admin -b 0xff");
 }
