@@ -2,7 +2,7 @@
 
 ```powershell
 PS C:\Users\efika> ipmi.exe --help
-ipmi 0.1.3
+ipmi 0.1.4
 Hosts management tool and ipmitool wrapper
 
 USAGE:

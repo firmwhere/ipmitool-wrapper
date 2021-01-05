@@ -268,15 +268,7 @@ fn main() {
             use std::process::Command;
 
             let cmd: (&str, &str) = if cfg!(target_os = "windows") { ("cmd", "/c") } else { ("sh", "-c") };
-            if let Ok(output) = Command::new(cmd.0).arg(cmd.1).arg(host.with_args(&opt)).output() {
-                if output.status.success() {
-                    std::io::stdout().write_all(&output.stdout).unwrap();
-                } else {
-                    std::io::stdout().write_all(&output.stderr).unwrap();
-                }
-            } else {
-                println!("Unknown error when run: {}", host.with_args(&opt));
-            }
+            Command::new(cmd.0).arg(cmd.1).arg(host.with_args(&opt)).status().unwrap();
         } else {
             println!("Please set default host with command:");
             println!("    ipmi.exe host use <index of host>");
